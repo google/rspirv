@@ -5,6 +5,7 @@ use super::{Constant, Decoration, storage::Token};
 #[derive(Clone, Debug)]
 pub struct StructMember {
     pub token: Token<Type>,
+    pub name: String,
     pub decorations: Vec<Decoration>,
 }
 
@@ -12,16 +13,23 @@ impl StructMember {
     pub fn new(ty: Token<Type>) -> Self {
         StructMember {
             token: ty,
+            name: String::new(),
             decorations: Vec::new(),
         }
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Type {
+    pub raw: TypeEnum,
+    pub name: String,
+}
+
 include!("autogen_types.rs");
 
-impl PartialEq for Type {
+impl PartialEq for TypeEnum {
     fn eq(&self, other: &Self) -> bool {
-        use Type::*;
+        use TypeEnum::*;
         match (self, other) {
             (Bool, Bool) => true,
             (Int { width: sw, signedness: ss }, Int { width: ow, signedness: os }) => sw == ow && ss == os,
@@ -33,31 +41,31 @@ impl PartialEq for Type {
     }
 }
 
-impl Type {
+impl TypeEnum {
     pub fn is_numerical_type(&self) -> bool {
         match self {
-            Type::Int {..} | Type::Float {..} => true,
+            TypeEnum::Int {..} | TypeEnum::Float {..} => true,
             _ => false,
         }
     }
 
     pub fn is_scalar_type(&self) -> bool {
         match self {
-            Type::Bool => true,
+            TypeEnum::Bool => true,
             _ => self.is_numerical_type(),
         }
     }
 
     pub fn is_aggregate_type(&self) -> bool {
         match self {
-            Type::Struct {..} | Type::Array {..} | Type::RuntimeArray {..} => true,
+            TypeEnum::Struct {..} | TypeEnum::Array {..} | TypeEnum::RuntimeArray {..} => true,
             _ => false,
         }
     }
 
     pub fn is_composite_type(&self) -> bool {
         match self {
-            Type::Vector {..} | Type::Matrix {..} => true,
+            TypeEnum::Vector {..} | TypeEnum::Matrix {..} => true,
             _ => self.is_aggregate_type(),
         }
     }

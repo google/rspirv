@@ -140,40 +140,6 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            5u32 => Ok(ops::Op::Name {
-                target: (match operands.next() {
-                    Some(&dr::Operand::IdRef(ref value)) => Some(*value),
-                    Some(_) => Err(OperandError::WrongType)?,
-                    None => None,
-                })
-                .ok_or(OperandError::Missing)?,
-                name: (match operands.next() {
-                    Some(&dr::Operand::LiteralString(ref value)) => Some(value.clone()),
-                    Some(_) => Err(OperandError::WrongType)?,
-                    None => None,
-                })
-                .ok_or(OperandError::Missing)?,
-            }),
-            6u32 => Ok(ops::Op::MemberName {
-                ty: (match operands.next() {
-                    Some(&dr::Operand::IdRef(ref value)) => Some(*value),
-                    Some(_) => Err(OperandError::WrongType)?,
-                    None => None,
-                })
-                .ok_or(OperandError::Missing)?,
-                member: (match operands.next() {
-                    Some(&dr::Operand::LiteralInt32(ref value)) => Some(*value),
-                    Some(_) => Err(OperandError::WrongType)?,
-                    None => None,
-                })
-                .ok_or(OperandError::Missing)?,
-                name: (match operands.next() {
-                    Some(&dr::Operand::LiteralString(ref value)) => Some(value.clone()),
-                    Some(_) => Err(OperandError::WrongType)?,
-                    None => None,
-                })
-                .ok_or(OperandError::Missing)?,
-            }),
             7u32 => Ok(ops::Op::String {
                 string: (match operands.next() {
                     Some(&dr::Operand::LiteralString(ref value)) => Some(value.clone()),
@@ -5717,12 +5683,12 @@ impl LiftContext {
             _ => Err(InstructionError::WrongOpcode),
         }
     }
-    pub fn lift_type(&mut self, raw: &dr::Instruction) -> Result<Type, InstructionError> {
+    pub fn lift_type(&mut self, raw: &dr::Instruction) -> Result<TypeEnum, InstructionError> {
         let mut operands = raw.operands.iter();
         match raw.class.opcode as u32 {
-            19u32 => Ok(Type::Void),
-            20u32 => Ok(Type::Bool),
-            21u32 => Ok(Type::Int {
+            19u32 => Ok(TypeEnum::Void),
+            20u32 => Ok(TypeEnum::Bool),
+            21u32 => Ok(TypeEnum::Int {
                 width: (match operands.next() {
                     Some(&dr::Operand::LiteralInt32(ref value)) => Some(*value),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5736,7 +5702,7 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            22u32 => Ok(Type::Float {
+            22u32 => Ok(TypeEnum::Float {
                 width: (match operands.next() {
                     Some(&dr::Operand::LiteralInt32(ref value)) => Some(*value),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5744,7 +5710,7 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            23u32 => Ok(Type::Vector {
+            23u32 => Ok(TypeEnum::Vector {
                 component_type: (match operands.next() {
                     Some(&dr::Operand::IdRef(ref value)) => Some(self.types.lookup_token(*value)),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5758,7 +5724,7 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            24u32 => Ok(Type::Matrix {
+            24u32 => Ok(TypeEnum::Matrix {
                 column_type: (match operands.next() {
                     Some(&dr::Operand::IdRef(ref value)) => Some(self.types.lookup_token(*value)),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5772,7 +5738,7 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            25u32 => Ok(Type::Image {
+            25u32 => Ok(TypeEnum::Image {
                 sampled_type: (match operands.next() {
                     Some(&dr::Operand::IdRef(ref value)) => Some(self.types.lookup_token(*value)),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5821,8 +5787,8 @@ impl LiftContext {
                     None => None,
                 },
             }),
-            26u32 => Ok(Type::Sampler),
-            27u32 => Ok(Type::SampledImage {
+            26u32 => Ok(TypeEnum::Sampler),
+            27u32 => Ok(TypeEnum::SampledImage {
                 image_type: (match operands.next() {
                     Some(&dr::Operand::IdRef(ref value)) => Some(self.types.lookup_token(*value)),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5830,7 +5796,7 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            28u32 => Ok(Type::Array {
+            28u32 => Ok(TypeEnum::Array {
                 element_type: (match operands.next() {
                     Some(&dr::Operand::IdRef(ref value)) => Some(self.types.lookup_token(*value)),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5846,7 +5812,7 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            29u32 => Ok(Type::RuntimeArray {
+            29u32 => Ok(TypeEnum::RuntimeArray {
                 element_type: (match operands.next() {
                     Some(&dr::Operand::IdRef(ref value)) => Some(self.types.lookup_token(*value)),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5854,8 +5820,8 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            30u32 => Ok(Type::Struct {
-                member_0_type_member_1_type: {
+            30u32 => Ok(TypeEnum::Struct {
+                members: {
                     let mut vec = Vec::new();
                     while let Some(item) = match operands.next() {
                         Some(&dr::Operand::IdRef(ref value)) => {
@@ -5869,7 +5835,7 @@ impl LiftContext {
                     vec
                 },
             }),
-            31u32 => Ok(Type::Opaque {
+            31u32 => Ok(TypeEnum::Opaque {
                 type_name: (match operands.next() {
                     Some(&dr::Operand::LiteralString(ref value)) => Some(value.clone()),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5877,7 +5843,7 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            32u32 => Ok(Type::Pointer {
+            32u32 => Ok(TypeEnum::Pointer {
                 storage_class: (match operands.next() {
                     Some(&dr::Operand::StorageClass(ref value)) => Some(*value),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5891,7 +5857,7 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            33u32 => Ok(Type::Function {
+            33u32 => Ok(TypeEnum::Function {
                 return_type: (match operands.next() {
                     Some(&dr::Operand::IdRef(ref value)) => Some(self.types.lookup_token(*value)),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5912,11 +5878,11 @@ impl LiftContext {
                     vec
                 },
             }),
-            34u32 => Ok(Type::Event),
-            35u32 => Ok(Type::DeviceEvent),
-            36u32 => Ok(Type::ReserveId),
-            37u32 => Ok(Type::Queue),
-            38u32 => Ok(Type::Pipe {
+            34u32 => Ok(TypeEnum::Event),
+            35u32 => Ok(TypeEnum::DeviceEvent),
+            36u32 => Ok(TypeEnum::ReserveId),
+            37u32 => Ok(TypeEnum::Queue),
+            38u32 => Ok(TypeEnum::Pipe {
                 qualifier: (match operands.next() {
                     Some(&dr::Operand::AccessQualifier(ref value)) => Some(*value),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5924,7 +5890,7 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            39u32 => Ok(Type::ForwardPointer {
+            39u32 => Ok(TypeEnum::ForwardPointer {
                 pointer_type: (match operands.next() {
                     Some(&dr::Operand::IdRef(ref value)) => Some(self.types.lookup_token(*value)),
                     Some(_) => Err(OperandError::WrongType)?,
@@ -5938,8 +5904,8 @@ impl LiftContext {
                 })
                 .ok_or(OperandError::Missing)?,
             }),
-            322u32 => Ok(Type::PipeStorage),
-            327u32 => Ok(Type::NamedBarrier),
+            322u32 => Ok(TypeEnum::PipeStorage),
+            327u32 => Ok(TypeEnum::NamedBarrier),
             _ => Err(InstructionError::WrongOpcode),
         }
     }

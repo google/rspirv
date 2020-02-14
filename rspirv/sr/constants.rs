@@ -4,7 +4,7 @@ use super::storage::Token;
 
 /// Represents a SPIR-V constant.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Constant {
+pub enum ConstEnum {
     Bool(bool),
     // TODO: Change to arbitrary width datatype
     Int(i32),
@@ -25,76 +25,81 @@ pub enum Constant {
     SpecOp(spirv::Op, Vec<Token<Constant>>),
 }
 
-impl Constant {
+pub struct Constant {
+    pub raw: ConstEnum,
+    pub name: String,
+}
+
+impl ConstEnum {
     pub fn is_bool_constant(&self) -> bool {
         match self {
-            Constant::Bool { .. } |
-            Constant::SpecBool { .. } => true,
+            ConstEnum::Bool { .. } |
+            ConstEnum::SpecBool { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_int_constant(&self) -> bool {
         match self {
-            Constant::Int { .. } |
-            Constant::SpecInt { .. } => true,
+            ConstEnum::Int { .. } |
+            ConstEnum::SpecInt { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_uint_constant(&self) -> bool {
         match self {
-            Constant::UInt { .. } |
-            Constant::SpecUInt { .. } => true,
+            ConstEnum::UInt { .. } |
+            ConstEnum::SpecUInt { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_float_constant(&self) -> bool {
         match self {
-            Constant::Float { .. } |
-            Constant::SpecFloat { .. } => true,
+            ConstEnum::Float { .. } |
+            ConstEnum::SpecFloat { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_composite_constant(&self) -> bool {
         match self {
-            Constant::Composite { .. } |
-            Constant::SpecComposite { .. } => true,
+            ConstEnum::Composite { .. } |
+            ConstEnum::SpecComposite { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_null_constant(&self) -> bool {
         match self {
-            Constant::Null { .. } => true,
+            ConstEnum::Null { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_sampler_constant(&self) -> bool {
         match self {
-            Constant::Sampler { .. } => true,
+            ConstEnum::Sampler { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_spec_constant(&self) -> bool {
         match self {
-            Constant::SpecBool { .. } |
-            Constant::SpecInt { .. } |
-            Constant::SpecUInt { .. } |
-            Constant::SpecFloat { .. } |
-            Constant::SpecComposite { .. } |
-            Constant::SpecOp { .. } => true,
+            ConstEnum::SpecBool { .. } |
+            ConstEnum::SpecInt { .. } |
+            ConstEnum::SpecUInt { .. } |
+            ConstEnum::SpecFloat { .. } |
+            ConstEnum::SpecComposite { .. } |
+            ConstEnum::SpecOp { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_spec_op_constant(&self) -> bool {
         match self {
-            Constant::SpecOp { .. } => true,
+            ConstEnum::SpecOp { .. } => true,
             _ => false,
         }
     }

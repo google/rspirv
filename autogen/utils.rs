@@ -63,19 +63,25 @@ pub fn get_enum_underlying_type(kind: &str, generic_string: bool) -> TokenStream
 
 /// Returns a suitable name for the given parameter.
 pub fn get_param_name(param: &structs::Operand) -> Ident {
+    let owned;
     let mut name = if param.name.len() == 0 {
         if param.kind == "IdResultType" {
-            "result_type".to_string()
+            "result_type"
         } else {
-            param.kind.to_snake_case()
+            owned = param.kind.to_snake_case();
+            &owned
         }
     } else {
-        param.name.to_snake_case()
+        owned = param.name.to_snake_case();
+        &owned
     };
 
     if name == "type" {
-        name = "ty".to_owned();
+        name = "ty";
+    }
+    if name.starts_with("member_0_type") {
+        name = "members";
     }
 
-    as_ident(&name)
+    as_ident(name)
 }

@@ -5,6 +5,7 @@ use heck::SnakeCase;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
+
 /// The name of a local variable in the generated code that
 /// represents an iterator over instruction operands.
 const OPERAND_ITER: &str = "operands";
@@ -260,6 +261,11 @@ pub struct CodeGeneratedFromInstructionGrammar {
 }
 
 const TYPE_PREFIX_LENGTH: usize = 6;
+const IGNORE_INSTRUCTIONS: &[&str] = &[
+    "Name",
+    "MemberName",
+    "Phi",
+];
 
 pub fn gen_sr_code_from_instruction_grammar(
     grammar_instructions: &[structs::Instruction],
@@ -330,7 +336,7 @@ pub fn gen_sr_code_from_instruction_grammar(
                 if field_names.is_empty() {
                     type_variants.push(quote!{ #type_ident });
                     type_lifts.push(quote! {
-                        #opcode => Ok(Type::#type_ident),
+                        #opcode => Ok(TypeEnum::#type_ident),
                     });
                 } else {
                     type_variants.push(quote! {
@@ -339,7 +345,7 @@ pub fn gen_sr_code_from_instruction_grammar(
                         }
                     });
                     type_lifts.push(quote! {
-                        #opcode => Ok(Type::#type_ident {
+                        #opcode => Ok(TypeEnum::#type_ident {
                             #( #field_names: #field_lifts, )*
                         }),
                     });
@@ -413,8 +419,8 @@ pub fn gen_sr_code_from_instruction_grammar(
                     });
                 }
             }
-            // Skip OpPhi as explicitly processed
-            _ if inst_name == "Phi" => {
+            // Skip instructions that are manually processed
+            _ if IGNORE_INSTRUCTIONS.contains(&inst_name) => {
             }
             _ => {
                 if field_names.is_empty() {
@@ -440,7 +446,7 @@ pub fn gen_sr_code_from_instruction_grammar(
 
     let types = quote! {
         #[derive(Clone, Debug)]
-        pub enum Type {
+        pub enum TypeEnum {
             #( #type_variants ),*
         }
     };
@@ -500,7 +506,7 @@ pub fn gen_sr_code_from_instruction_grammar(
             }
             pub fn lift_type(
                 &mut self, raw: &dr::Instruction
-            ) -> Result<Type, InstructionError> {
+            ) -> Result<TypeEnum, InstructionError> {
                 let mut #iter_ident = raw.operands.iter();
                 match raw.class.opcode as u32 {
                     #( #type_lifts )*

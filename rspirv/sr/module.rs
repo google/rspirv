@@ -1,12 +1,18 @@
 use crate::{
     sr::constants::Constant,
     sr::instructions,
-    sr::ops::{self, Op},
+    sr::ops,
     sr::storage::*,
     sr::types::Type,
 };
 
 use spirv;
+
+#[derive(Debug)]
+pub struct Operation {
+    pub raw: ops::Op,
+    pub name: String,
+}
 
 #[derive(Debug)]
 pub struct EntryPoint {
@@ -19,7 +25,7 @@ pub struct EntryPoint {
 #[derive(Debug)]
 pub struct Block {
     pub arguments: Vec<Token<Type>>,
-    pub ops: Vec<Token<Op>>,
+    pub ops: Vec<Token<Operation>>,
     pub terminator: ops::Terminator,
 }
 
@@ -29,7 +35,7 @@ pub struct Jump {
     /// The block to jump to.
     pub block: Token<Block>,
     /// The argument values corresponding to the block arguments.
-    pub arguments: Vec<Token<Op>>,
+    pub arguments: Vec<Token<Operation>>,
 }
 
 pub struct Function {
@@ -64,7 +70,7 @@ pub struct Module {
     pub constants: Storage<Constant>,
 
     /// All operations.
-    pub ops: Storage<Op>,
+    pub ops: Storage<Operation>,
 
     /// All functions.
     pub functions: Vec<Function>,

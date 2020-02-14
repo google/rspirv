@@ -3,7 +3,7 @@
 // DO NOT MODIFY!
 
 #[derive(Clone, Debug)]
-pub enum Type {
+pub enum TypeEnum {
     Void,
     Bool,
     Int {
@@ -43,7 +43,7 @@ pub enum Type {
         element_type: Token<Type>,
     },
     Struct {
-        member_0_type_member_1_type: Vec<StructMember>,
+        members: Vec<StructMember>,
     },
     Opaque {
         type_name: String,

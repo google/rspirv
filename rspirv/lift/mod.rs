@@ -11,7 +11,7 @@ use crate::{
         module,
         ops,
         storage::Token,
-        Constant, StructMember, Type,
+        Constant, ConstEnum, StructMember, Type, TypeEnum,
     },
 };
 
@@ -20,14 +20,14 @@ use spirv;
 use std::{borrow::Borrow, mem};
 
 /// A structure that we associate an <id> with, containing
-/// both the operation token and the resutl type.
+/// both the operation token and the result type.
 struct OpInfo {
-    op: Token<ops::Op>,
+    op: Token<module::Operation>,
     ty: Option<Token<Type>>,
 }
 
-impl Borrow<Token<ops::Op>> for OpInfo {
-    fn borrow(&self) -> &Token<ops::Op> {
+impl Borrow<Token<module::Operation>> for OpInfo {
+    fn borrow(&self) -> &Token<module::Operation> {
         &self.op
     }
 }
@@ -37,7 +37,7 @@ pub struct LiftContext {
     types: LiftStorage<Type>,
     constants: LiftStorage<Constant>,
     blocks: LiftStorage<module::Block>,
-    ops: LiftStorage<ops::Op, OpInfo>,
+    ops: LiftStorage<module::Operation, OpInfo>,
 }
 
 include!("autogen_context.rs");
@@ -106,7 +106,10 @@ impl LiftContext {
             match context.lift_type(inst) {
                 Ok(value) => {
                     if let Some(id) = inst.result_id {
-                        context.types.append_id(id, value);
+                        context.types.append_id(id, Type {
+                            raw: value,
+                            name: String::new(),
+                        });
                     }
                     continue
                 }
@@ -116,7 +119,10 @@ impl LiftContext {
             match context.lift_constant(inst) {
                 Ok(value) => {
                     if let Some(id) = inst.result_id {
-                        context.constants.append_id(id, value);
+                        context.constants.append_id(id, Constant {
+                            raw: value,
+                            name: String::new(),
+                        });
                     }
                     continue
                 }
@@ -131,11 +137,15 @@ impl LiftContext {
                     .as_ref()
                     .ok_or(ConversionError::MissingFunction)?
             )?;
-            //TODO: lift function type instruction
 
             for block in fun.blocks.iter() {
                 let mut arguments = Vec::new();
-                for inst in &block.instructions {
+                let mut ops = Vec::new();
+                if block.instructions.is_empty() {
+                    return Err(ConversionError::MissingTerminator);
+                }
+
+                for inst in &block.instructions[.. block.instructions.len() - 1] {
                     match inst.class.opcode {
                         spirv::Op::Line => {} // skip line decorations
                         spirv::Op::Phi => {
@@ -151,16 +161,96 @@ impl LiftContext {
                                 )),
                             };
                         }
-                        _ => {
-                            if let Some(id) = inst.result_id {
-                                let op = context.lift_op(inst)?;
-                                let types = &context.types;
-                                let (token, entry) = context.ops.append(id, op);
-                                entry.insert(OpInfo {
-                                    op: token,
-                                    ty: inst.result_type.map(|ty| *types.lookup(ty).1),
-                                });
+                        spirv::Op::Name => {
+                            let target = match inst.operands[0] {
+                                dr::Operand::IdRef(id) => id,
+                                _ => return Err(ConversionError::Instruction(
+                                    InstructionError::Operand(OperandError::Missing)
+                                )),
+                            };
+                            let name = match inst.operands[1] {
+                                dr::Operand::LiteralString(ref name) => name.clone(),
+                                _ => return Err(ConversionError::Instruction(
+                                    InstructionError::Operand(OperandError::Missing)
+                                )),
+                            };
+                            if let Some(op) = context.ops.try_lookup_mut(target) {
+                                op.name = name;
+                            } else
+                            if let Some(ty) = context.types.try_lookup_mut(target) {
+                                ty.name = name;
+                            } else
+                            if let Some(con) = context.constants.try_lookup_mut(target) {
+                                con.name = name;
+                            } else {
+                                //log::warn!("Unable to assign name {} -> {}", target, name);
                             }
+                        }
+                        spirv::Op::MemberName => {
+                            let target = match inst.operands[0] {
+                                dr::Operand::IdRef(id) => id,
+                                _ => return Err(ConversionError::Instruction(
+                                    InstructionError::Operand(OperandError::Missing)
+                                )),
+                            };
+                            let member = match inst.operands[1] {
+                                dr::Operand::LiteralInt32(index) => index,
+                                _ => return Err(ConversionError::Instruction(
+                                    InstructionError::Operand(OperandError::Missing)
+                                )),
+                            };
+                            let name = match inst.operands[2] {
+                                dr::Operand::LiteralString(ref name) => name.clone(),
+                                _ => return Err(ConversionError::Instruction(
+                                    InstructionError::Operand(OperandError::Missing)
+                                )),
+                            };
+                            match context.types.try_lookup_mut(target) {
+                                Some(Type { raw: TypeEnum::Struct { ref mut members }, .. }) => {
+                                    match members.get_mut(member as usize) {
+                                        Some(sm) => {
+                                            sm.name = name;
+                                        }
+                                        None => {
+                                            return Err(ConversionError::Instruction(
+                                                InstructionError::Operand(OperandError::WrongType)
+                                            ));
+                                        }
+                                    }
+                                }
+                                Some(_) => {
+                                    return Err(ConversionError::Instruction(
+                                        InstructionError::Operand(OperandError::WrongType)
+                                    ));
+                                }
+                                None => {
+                                    //TODO: better error here
+                                    return Err(ConversionError::Instruction(
+                                        InstructionError::Operand(OperandError::Missing)
+                                    ));
+                                }
+                            }
+                        }
+                        _ => {
+                            let op = module::Operation {
+                                raw: context.lift_op(inst)?,
+                                name: String::new(),
+                            };
+                            let token = match inst.result_id {
+                                Some(id) => {
+                                    let types = &context.types;
+                                    let (token, entry) = context.ops.append(id, op);
+                                    entry.insert(OpInfo {
+                                        op: token,
+                                        ty: inst.result_type.map(|ty| *types.lookup(ty).1),
+                                    });
+                                    token
+                                }
+                                None => {
+                                    context.ops.append_noid(op)
+                                }
+                            };
+                            ops.push(token);
                         }
                     }
                 }
@@ -175,7 +265,7 @@ impl LiftContext {
                     block.label.as_ref().unwrap().result_id.unwrap(),
                     module::Block {
                         arguments,
-                        ops: Vec::new(),
+                        ops,
                         terminator,
                     },
                 );
@@ -188,7 +278,7 @@ impl LiftContext {
 
             functions.push(module::Function {
                 control: def.function_control,
-                result: context.types.append_id(1, Type::Void), //TODO: fty.return_type,
+                result: context.types.lookup_token(def.function_type),
                 parameters: Vec::new(),
                 blocks,
                 start_block,
@@ -204,8 +294,14 @@ impl LiftContext {
                 .iter()
                 .map(|cap| context.lift_capability(cap).map(|cap| cap.capability))
                 .collect::<Result<_, InstructionError>>()?,
-            extensions: Vec::new(),
-            ext_inst_imports: Vec::new(),
+            extensions: module.extensions
+                .iter()
+                .map(|ext| context.lift_extension(ext).map(|ext| ext.name))
+                .collect::<Result<_, InstructionError>>()?,
+            ext_inst_imports: module.extensions
+                .iter()
+                .map(|ext| context.lift_ext_inst_import(ext).map(|ext| ext.name))
+                .collect::<Result<_, InstructionError>>()?,
             memory_model: match module.memory_model {
                 Some(ref mm) => context.lift_memory_model(mm)?,
                 None => return Err(ConversionError::MissingHeader),
@@ -228,27 +324,27 @@ impl LiftContext {
 
     fn lift_constant(
         &self, inst: &dr::Instruction
-    ) -> Result<Constant, InstructionError> {
+    ) -> Result<ConstEnum, InstructionError> {
         match inst.class.opcode {
-            spirv::Op::ConstantTrue => Ok(Constant::Bool(true)),
-            spirv::Op::ConstantFalse => Ok(Constant::Bool(false)),
+            spirv::Op::ConstantTrue => Ok(ConstEnum::Bool(true)),
+            spirv::Op::ConstantFalse => Ok(ConstEnum::Bool(false)),
             spirv::Op::Constant => {
                 match inst.result_type {
                     Some(id) => {
                         let oper = inst.operands
                             .first()
                             .ok_or(InstructionError::Operand(OperandError::Missing))?;
-                        let (value, width) = match *self.types.lookup(id).0 {
-                            Type::Int { signedness: 0, width } => match *oper {
-                                dr::Operand::LiteralInt32(v) => (Constant::UInt(v), width),
+                        let (value, width) = match self.types.lookup(id).0.raw {
+                            TypeEnum::Int { signedness: 0, width } => match *oper {
+                                dr::Operand::LiteralInt32(v) => (ConstEnum::UInt(v), width),
                                 _ => return Err(InstructionError::Operand(OperandError::WrongType)),
                             },
-                            Type::Int { width, .. } => match *oper {
-                                dr::Operand::LiteralInt32(v) => (Constant::Int(v as i32), width),
+                            TypeEnum::Int { width, .. } => match *oper {
+                                dr::Operand::LiteralInt32(v) => (ConstEnum::Int(v as i32), width),
                                 _ => return Err(InstructionError::Operand(OperandError::WrongType)),
                             },
-                            Type::Float { width } => match *oper {
-                                dr::Operand::LiteralFloat32(v) => (Constant::Float(v), width),
+                            TypeEnum::Float { width } => match *oper {
+                                dr::Operand::LiteralFloat32(v) => (ConstEnum::Float(v), width),
                                 _ => return Err(InstructionError::Operand(OperandError::WrongType)),
                             },
                             _ => return Err(InstructionError::MissingResult),
@@ -270,13 +366,13 @@ impl LiftContext {
                     };
                     vec.push(token);
                 }
-                Ok(Constant::Composite(vec))
+                Ok(ConstEnum::Composite(vec))
             }
             spirv::Op::ConstantSampler => {
                 if inst.operands.len() < 3 {
                     return Err(InstructionError::Operand(OperandError::Missing))
                 }
-                Ok(Constant::Sampler {
+                Ok(ConstEnum::Sampler {
                     addressing_mode: match inst.operands[0] {
                         dr::Operand::SamplerAddressingMode(v) => v,
                         _ => return Err(InstructionError::Operand(OperandError::WrongType)),
@@ -291,7 +387,7 @@ impl LiftContext {
                     },
                 })
             }
-            spirv::Op::ConstantNull => Ok(Constant::Null),
+            spirv::Op::ConstantNull => Ok(ConstEnum::Null),
             _ => Err(InstructionError::WrongOpcode)
         }
     }
