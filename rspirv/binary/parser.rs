@@ -330,6 +330,7 @@ impl<'c, 'd> Parser<'c, 'd> {
                     )),
                 },
                 Type::Float(size) => match size {
+                    16 => Ok(dr::Operand::LiteralFloat32(self.decoder.float32()?)),
                     32 => Ok(dr::Operand::LiteralFloat32(self.decoder.float32()?)),
                     64 => Ok(dr::Operand::LiteralFloat64(self.decoder.float64()?)),
                     _ => Err(State::TypeUnsupported(
