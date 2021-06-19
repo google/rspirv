@@ -12,7 +12,7 @@ use crate::{
 use std::{borrow::Borrow, mem};
 
 /// A structure that we associate an <id> with, containing
-/// both the operation token and the resutl type.
+/// both the operation token and the result type.
 struct OpInfo {
     op: Token<ops::Op>,
     ty: Option<Token<Type>>,
@@ -128,17 +128,31 @@ impl LiftContext {
                     match inst.class.opcode {
                         spirv::Op::Line => {} // skip line decorations
                         spirv::Op::Phi => {
-                            match inst.operands[0] {
-                                dr::Operand::IdRef(id) => {
-                                    let (_, info) = context.ops.lookup(id);
-                                    arguments.push(info.ty.ok_or(InstructionError::MissingResult)?);
-                                }
-                                _ => {
-                                    return Err(ConversionError::Instruction(
-                                        InstructionError::Operand(OperandError::Missing),
-                                    ))
-                                }
-                            };
+                            let ty = context.types.lookup_token(
+                                inst.result_type.ok_or(InstructionError::MissingResult)?,
+                            );
+                            arguments.push(ty);
+
+                            // Sanity-check if all source variables are of the same type
+                            for op in inst.operands.iter().step_by(2) {
+                                match op {
+                                    dr::Operand::IdRef(id) => {
+                                        if let Some((_, info)) = context.ops.lookup_safe(*id) {
+                                            assert_eq!(Some(ty), info.ty);
+                                        } else {
+                                            // let (v, info) =
+                                            //     context.constants.lookup_safe(*id).unwrap();
+                                            // TODO: Can't convert Constant back to their lowered type yet!
+                                            // assert_eq!(Some(ty), info.ty.as_ref());
+                                        }
+                                    }
+                                    _ => {
+                                        return Err(ConversionError::Instruction(
+                                            InstructionError::Operand(OperandError::Missing),
+                                        ))
+                                    }
+                                };
+                            }
                         }
                         _ => {
                             if let Some(id) = inst.result_id {

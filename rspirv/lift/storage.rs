@@ -32,6 +32,11 @@ impl<T, L: Borrow<Token<T>>> LiftStorage<T, L> {
         (&self.values[*info.borrow()], info)
     }
 
+    pub(in crate::lift) fn lookup_safe(&self, id: spirv::Word) -> Option<(&T, &L)> {
+        let info = self.lookup.get(&id)?;
+        Some((&self.values[*info.borrow()], info))
+    }
+
     pub(in crate::lift) fn append(
         &mut self,
         id: spirv::Word,
