@@ -7007,6 +7007,45 @@ impl Builder {
         self.insert_into_block(insert_point, inst)?;
         Ok(_id)
     }
+    #[doc = "Appends an OpSelectionMerge instruction to the current block."]
+    pub fn selection_merge(
+        &mut self,
+        merge_block: spirv::Word,
+        selection_control: spirv::SelectionControl,
+    ) -> BuildResult<()> {
+        #[allow(unused_mut)]
+        let mut inst = dr::Instruction::new(
+            spirv::Op::SelectionMerge,
+            None,
+            None,
+            vec![
+                dr::Operand::IdRef(merge_block),
+                dr::Operand::SelectionControl(selection_control),
+            ],
+        );
+        self.insert_into_block(InsertPoint::End, inst)?;
+        Ok(())
+    }
+    #[doc = "Appends an OpSelectionMerge instruction to the current block."]
+    pub fn insert_selection_merge(
+        &mut self,
+        insert_point: InsertPoint,
+        merge_block: spirv::Word,
+        selection_control: spirv::SelectionControl,
+    ) -> BuildResult<()> {
+        #[allow(unused_mut)]
+        let mut inst = dr::Instruction::new(
+            spirv::Op::SelectionMerge,
+            None,
+            None,
+            vec![
+                dr::Operand::IdRef(merge_block),
+                dr::Operand::SelectionControl(selection_control),
+            ],
+        );
+        self.insert_into_block(insert_point, inst)?;
+        Ok(())
+    }
     #[doc = "Appends an OpGroupAsyncCopy instruction to the current block."]
     pub fn group_async_copy(
         &mut self,

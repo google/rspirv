@@ -701,7 +701,7 @@ fn is_terminator_instruction(inst: &structs::Instruction) -> bool {
             inst.opname.as_str(),
             "OpTerminateRayKHR" | "OpIgnoreIntersectionKHR"
         ),
-        Some(structs::Class::Branch) => !matches!(inst.opname.as_str(), "OpPhi" | "OpLabel"),
+        Some(structs::Class::Branch) => !matches!(inst.opname.as_str(), "OpPhi" | "OpLabel" | "OpSelectionMerge"),
         _ => false,
     }
 }

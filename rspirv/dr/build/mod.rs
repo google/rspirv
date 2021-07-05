@@ -587,7 +587,7 @@ impl Builder {
         result_id: Option<spirv::Word>,
         extension_set: spirv::Word,
         instruction: spirv::Word,
-        operands: impl Iterator<Item = dr::Operand>,
+        operands: impl IntoIterator<Item = dr::Operand>,
     ) -> BuildResult<spirv::Word> {
         let mut ops = vec![
             dr::Operand::IdRef(extension_set),

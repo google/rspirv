@@ -48,43 +48,6 @@ impl Builder {
         inst.operands.extend(additional_params);
         self.insert_end_block(insert_point, inst)
     }
-    #[doc = "Appends an OpSelectionMerge instruction and ends the current block."]
-    pub fn selection_merge(
-        &mut self,
-        merge_block: spirv::Word,
-        selection_control: spirv::SelectionControl,
-    ) -> BuildResult<()> {
-        #[allow(unused_mut)]
-        let mut inst = dr::Instruction::new(
-            spirv::Op::SelectionMerge,
-            None,
-            None,
-            vec![
-                dr::Operand::IdRef(merge_block),
-                dr::Operand::SelectionControl(selection_control),
-            ],
-        );
-        self.end_block(inst)
-    }
-    #[doc = "Insert an OpSelectionMerge instruction and ends the current block."]
-    pub fn insert_selection_merge(
-        &mut self,
-        insert_point: InsertPoint,
-        merge_block: spirv::Word,
-        selection_control: spirv::SelectionControl,
-    ) -> BuildResult<()> {
-        #[allow(unused_mut)]
-        let mut inst = dr::Instruction::new(
-            spirv::Op::SelectionMerge,
-            None,
-            None,
-            vec![
-                dr::Operand::IdRef(merge_block),
-                dr::Operand::SelectionControl(selection_control),
-            ],
-        );
-        self.insert_end_block(insert_point, inst)
-    }
     #[doc = "Appends an OpBranch instruction and ends the current block."]
     pub fn branch(&mut self, target_label: spirv::Word) -> BuildResult<()> {
         #[allow(unused_mut)]
