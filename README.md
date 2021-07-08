@@ -32,10 +32,10 @@ The current implementation supports SPIR-V 1.4 (Revision 1).
 
 Multiple crates are published from this project:
 
-|      Name      |   Crate   |   Docs   |
-| :------------: | :-------: | :------: |
-| rspirv         | [![Crate][img-crate-rspirv]][crate-rspirv]   | [![Documentation][img-doc-rspirv]][doc-rspirv]   |
-| spirv\_headers | [![Crate][img-crate-headers]][crate-headers] | [![Documentation][img-doc-headers]][doc-headers] |
+|  Name  |   Crate   |   Docs   |
+| :----: | :-------: | :------: |
+| rspirv | [![Crate][img-crate-rspirv]][crate-rspirv]   | [![Documentation][img-doc-rspirv]][doc-rspirv]   |
+| spirv  | [![Crate][img-crate-headers]][crate-headers] | [![Documentation][img-doc-headers]][doc-headers] |
 
 In total rspirv APIs contains:
 * The [SPIR-V header][doc-headers] (all SPIR-V structs, enums, and constants)
@@ -80,7 +80,7 @@ Building a SPIR-V module, assembling it, parsing it, and then disassembling it:
 
 ```rust
 extern crate rspirv;
-extern crate spirv_headers as spirv;
+extern crate spirv as spirv;
 
 use rspirv::binary::Assemble;
 use rspirv::binary::Disassemble;
@@ -145,7 +145,7 @@ There are multiple crates inside this repo:
 - `autogen/`: Crate to generate various Rust code snippets used in the modules
   in `spirv/` and `rspirv/`, from SPIR-V's JSON grammar. If you are not
   modifying `spirv/` or `rspirv/`, you don't need to care about this directory.
-- `spirv/`: The `spirv_headers` crate.
+- `spirv/`: The `spirv` crate.
 - `rspirv/`: The core `rspirv` crate.
 - `dis/`: A binary SPIR-V disassembler based on the `rspirv` crate.
 - `spirv-blobs`: SPIR-V blobs provided by the user for testing.
@@ -157,7 +157,7 @@ Build
 git clone https://github.com/gfx-rs/rspirv.git /path/to/rspirv
 ```
 
-If you just want to compile and use the `spirv_headers` crate:
+If you just want to compile and use the `spirv` crate:
 
 ```sh
 cd /path/to/rspirv/spirv
@@ -171,7 +171,7 @@ cd /path/to/rspirv/rspirv
 cargo build
 ```
 
-If you want to refresh the `spirv_headers` or `rspirv` crate with new code
+If you want to refresh the `spirv` or `rspirv` crate with new code
 snippets generated from SPIR-V's JSON grammar:
 
 ```sh
@@ -206,10 +206,10 @@ developed by the gfx-rs [Translators][github-translators] team.
 [img-doc-rspirv]: https://docs.rs/rspirv/badge.svg
 [crate-rspirv]: https://crates.io/crates/rspirv
 [doc-rspirv]: https://docs.rs/rspirv
-[img-crate-headers]: https://img.shields.io/crates/v/spirv_headers.svg
-[img-doc-headers]: https://docs.rs/spirv_headers/badge.svg
-[crate-headers]: https://crates.io/crates/spirv_headers
-[doc-headers]: https://docs.rs/spirv_headers
+[img-crate-headers]: https://img.shields.io/crates/v/spirv.svg
+[img-doc-headers]: https://docs.rs/spirv/badge.svg
+[crate-headers]: https://crates.io/crates/spirv
+[doc-headers]: https://docs.rs/spirv
 [spirv]: https://www.khronos.org/registry/spir-v/
 [vulkan]: https://www.khronos.org/vulkan/
 [opengl]: https://www.opengl.org/

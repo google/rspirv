@@ -1,5 +1,3 @@
-#![doc(html_root_url = "https://docs.rs/spirv_headers/1.5/")]
-
 //! The SPIR-V header.
 //!
 //! This crate contains Rust definitions of all SPIR-V structs, enums,

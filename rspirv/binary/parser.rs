@@ -181,7 +181,7 @@ pub fn parse_words(binary: impl AsRef<[u32]>, consumer: &mut dyn Consumer) -> Re
 ///
 /// ```
 /// extern crate rspirv;
-/// extern crate spirv_headers as spirv;
+/// extern crate spirv as spirv;
 ///
 /// use spirv::{AddressingModel, MemoryModel};
 /// use rspirv::binary::Parser;

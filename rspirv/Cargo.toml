@@ -23,7 +23,7 @@ derive_more = "0.99"
 fxhash = "0.2"
 num-traits = "0.2"
 
-[dependencies.spirv_headers]
+[dependencies.spirv]
 version = "~1.5.0"
 path = "../spirv"
 

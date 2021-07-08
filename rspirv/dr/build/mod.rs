@@ -52,7 +52,7 @@ type BuildResult<T> = result::Result<T, Error>;
 ///
 /// ```
 /// extern crate rspirv;
-/// extern crate spirv_headers as spirv;
+/// extern crate spirv as spirv;
 ///
 /// use rspirv::binary::Disassemble;
 ///
