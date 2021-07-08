@@ -7,4 +7,5 @@ sign-tag = true
 
 pre-release-replacements = [
   {file="README.md", search="spirv = .*", replace="{{crate_name}} = \"{{version}}\""},
+  {file="../rspirv/Cargo.toml", search="spirv = .*", replace="{{crate_name}} = \"={{version}}\""},
 ]
