@@ -1,11 +1,11 @@
 [package]
-name = "spirv_headers"
-version = "1.5.1"
+name = "spirv"
+version = "0.1.0+1.5.4"
 authors = ["Lei Zhang <antiagainst@gmail.com>"]
 edition = "2018"
 
 description = "Rust definition of SPIR-V structs and enums"
-documentation = "https://docs.rs/spirv_headers"
+documentation = "https://docs.rs/spirv"
 repository = "https://github.com/gfx-rs/rspirv"
 readme = "README.md"
 license = "Apache-2.0"

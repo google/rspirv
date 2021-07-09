@@ -18,7 +18,7 @@ First add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-spirv_headers = "1.5.1"
+spirv = "1.5.1"
 ```
 
 Version
@@ -36,9 +36,9 @@ Examples
 Please see the [documentation][doc-headers] and project's
 [README][project-readme] for examples.
 
-[img-crate-headers]: https://img.shields.io/crates/v/spirv_headers.svg
-[img-doc-headers]: https://docs.rs/spirv_headers/badge.svg
-[crate-headers]: https://crates.io/crates/spirv_headers
-[doc-headers]: https://docs.rs/spirv_headers
+[img-crate-headers]: https://img.shields.io/crates/v/spirv.svg
+[img-doc-headers]: https://docs.rs/spirv/badge.svg
+[crate-headers]: https://crates.io/crates/spirv
+[doc-headers]: https://docs.rs/spirv
 [project-readme]: https://github.com/gfx-rs/rspirv/blob/master/README.md
 [rust-1.20]: https://blog.rust-lang.org/2017/08/31/Rust-1.20.html
